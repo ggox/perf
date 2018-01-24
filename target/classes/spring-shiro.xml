@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+	xsi:schemaLocation="http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd">
+	<!-- spring-shiro -->
+	<!-- 安全管理器 -->
+	<bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+		<!-- 缓存管理 -->
+		<property name="cacheManager" ref="cacheManager" />
+		<!-- 自定义realm -->
+		<property name="realm" ref="userRealm" />
+		<!-- 回话管理 -->
+		<property name="sessionManager" ref="sessionManager"></property>
+		<!-- 认证策略（多个realm时可配置） -->
+		<!-- <property name="authenticator" ref="authenticator"></property> -->
+	</bean>
+	<!-- 关于AuthenticationStrategy的配置，有三种：
+	AtLeastOneSuccessfulStrategy ：如果一个（或更多）Realm 验证成功，则整体的尝试被认为是成功的。如果没有一个验证成功，则整体尝试失败。
+	FirstSuccessfulStrategy 只有第一个成功地验证的Realm 返回的信息将被使用。所有进一步的Realm 将被忽略。如果没有一个验证成功，则整体尝试失败
+	AllSucessfulStrategy 为了整体的尝试成功，所有配置的Realm 必须验证成功。如果没有一个验证成功，则整体尝试失败。
+	<bean id="authenticator" 
+	  	class="org.apache.shiro.authc.pam.ModularRealmAuthenticator">
+	  	<property name="authenticationStrategy">
+	  		<bean class="org.apache.shiro.authc.pam.AtLeastOneSuccessfulStrategy"></bean>
+	  	</property>
+    </bean> -->
+	<bean id="sessionDAO" class="org.apache.shiro.session.mgt.eis.MemorySessionDAO" />
+	<bean id="sessionManager" class="org.apache.shiro.web.session.mgt.DefaultWebSessionManager">
+		<property name="sessionDAO" ref="sessionDAO" />
+		<property name="sessionIdCookieEnabled" value="true"/>
+        <property name="sessionIdCookie" ref="sessionIdCookie"/>
+	</bean>
+	<bean id="sessionIdCookie" class="org.apache.shiro.web.servlet.SimpleCookie">
+        <constructor-arg name="name" value="dp.session.id"/>
+    </bean>
+    
+	<!-- 配置 CacheManager. 需要加入 ehcache 的 jar 包及配置文件. -->
+	<bean id="cacheManager" class="org.apache.shiro.cache.ehcache.EhCacheManager">
+		<property name="cacheManagerConfigFile" value="classpath:ehcache.xml" />
+	</bean>
+
+	<!-- 自定义realm -->
+	<bean id="userRealm" class="com.dp.common.shiro.UserRealm">
+		<property name="credentialsMatcher">
+			<bean class="org.apache.shiro.authc.credential.HashedCredentialsMatcher">
+				<property name="hashAlgorithmName" value="MD5"></property>
+				<property name="hashIterations" value="1"></property>
+			</bean>
+		</property>
+	</bean>
+
+	<!-- 配置 LifecycleBeanPostProcessor. 可以自定的来调用配置在 Spring IOC 容器中 shiro 
+		bean 的生命周期方法. -->
+	<bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor" />
+	<!-- 启用 IOC 容器中使用 shiro 的注解. 但必须在配置了 LifecycleBeanPostProcessor 之后才可以使用. -->
+	<bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator"
+		depends-on="lifecycleBeanPostProcessor" />
+	<bean class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">
+		<property name="securityManager" ref="securityManager" />
+	</bean>
+	<!-- Shiro 的Web过滤器 -->
+	<bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+		<property name="securityManager" ref="securityManager" />
+		<!-- 如果没有认证将要跳转的登陆地址，http可访问的url，如果不在表单认证过虑器FormAuthenticationFilter中指定此地址就为身份认证地址 -->
+		<property name="loginUrl" value="/login" />
+		<!-- 没有权限跳转的地址 -->
+		<property name="unauthorizedUrl" value="/unauthorized" />
+		<!-- shiro拦截器配置 -->
+		<property name="filters">
+			<map>
+				<!-- roles[**,**]表示角色和，anyRoles[**,**]表示角色或（自定义实现） -->
+				<entry key="anyRoles" value-ref="anyRoles"></entry>
+			</map>
+		</property>
+		<!-- 配置哪些页面需要受保护. 以及访问这些页面需要的权限. 1). anon 可以被匿名访问 2). authc 必须认证(即登录)后才可能访问的页面. 
+			3). logout 登出. 4). roles 角色过滤器 -->
+		<!-- map方式从数据库提取，注意顺序 -->
+		<!-- <property name="filterChainDefinitionMap" ref="filterChainDefinitionMap"></property> -->
+		<!-- 如果配置项较少不存在数据库的话可以采用 filterChainDefinitions属性直接定义在配置文件里 -->
+		<property name = "filterChainDefinitions">
+			<value>
+				/index.jsp = anon
+				/static/** = anon
+				/login = anon
+				/loginSubmit = anon
+				/captchaCode = anon
+				/register = anon
+				/forgotpassword = anon
+				/test/** = authc
+				/** = user
+			</value>
+		</property>
+	</bean>
+	<bean id="anyRoles" class="com.dp.common.shiro.AnyRolesAuthorizationFilter" />
+	<!-- 配置一个 bean, 该 bean 实际上是一个 Map. 通过实例工厂方法的方式  配合 filterChainDefinitionMap属性，这里不使用map方式故注释-->
+	<!-- <bean id="filterChainDefinitionMap" factory-bean="filterChainDefinitionMapBuilder"
+		factory-method="buildFilterChainDefinitionMap"></bean>
+
+	<bean id="filterChainDefinitionMapBuilder" class="com.dp.common.shiro.FilterChainDefinitionMapBuilder">
+		<property name="shiroService" ref="shiroService"></property>
+	</bean> -->
+</beans>

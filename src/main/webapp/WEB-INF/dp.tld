@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE taglib PUBLIC "-//Sun Microsystems, Inc.//DTD JSP Tag Library 1.2//EN"
+                        "http://java.sun.com/dtd/web-jsptaglibrary_1_2.dtd">
+<taglib>
+	<tlib-version>1.0</tlib-version>
+	<jsp-version>1.2</jsp-version>
+	<short-name>dp</short-name>
+	<display-name>自定义标签</display-name>
+	<description>自定义标签</description>
+	<tag>
+		<name>drawMenu</name>
+		<tag-class>com.dp.common.tags.drawMenu</tag-class>
+		<body-content>empty</body-content>
+		<attribute>
+			<name>userMenus</name>
+			<required>true</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute> 
+	</tag>
+</taglib>

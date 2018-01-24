@@ -1,0 +1,7 @@
+.content-header{
+	margin-bottom: 20px;
+}
+.content-header > .breadcrumb{
+	float: left;
+	position: static;
+}

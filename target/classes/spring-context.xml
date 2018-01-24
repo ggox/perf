@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+	xsi:schemaLocation="http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd">
+	<!-- 扫描业务层组件 -->
+	<context:component-scan base-package="com.dp.service"/>
+	<!-- 数据源配置 -->
+	<!-- 引入配置文件，ignore-unresolvable="true" 忽略解析不到的属性 -->
+	<context:property-placeholder location="classpath:jdbc.properties"
+		ignore-unresolvable="true" />
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+		destroy-method="close">
+		<property name="driverClass" value="${perf.driver}"></property>
+		<property name="jdbcUrl" value="${perf.url}"></property>
+		<property name="user" value="${perf.username}"></property>
+		<property name="password" value="${perf.password}"></property>
+		<property name="minPoolSize" value="${perf.minPoolSize}"></property>
+		<property name="maxPoolSize" value="${perf.maxPoolSize}"></property>
+		<property name="initialPoolSize" value="${perf.initialPoolSize}"></property>
+		<property name="acquireIncrement" value="${perf.acquireIncrement}"></property>
+		<property name="maxIdleTime" value="${perf.maxIdleTime}"></property>
+		<property name="idleConnectionTestPeriod" value="${perf.idleConnectionTestPeriod}"></property>
+		<property name="acquireRetryAttempts" value="${perf.acquireRetryAttempts}"></property>
+		<property name="numHelperThreads" value="${perf.numHelperThreads}"></property>
+	</bean>
+	<!-- 事物管理器 -->
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+	<!-- 使用注解控制事务 -->
+	<tx:annotation-driven transaction-manager="transactionManager" />
+	<!-- 整合mybatis -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="configLocation" value="classpath:mybatis-config.xml" />
+		<!-- 自动扫描mapping.xml文件 -->
+		<property name="mapperLocations">
+			<list>
+				<value>classpath:mappers/*.xml</value>
+			</list>
+		</property>
+		<!-- <property name="typeAliasesPackage" value="com.dp.entity"></property> -->
+		<!-- 配置pageHelper5.0.0 (也可以在mybatis-config.xml中配置插件) -->
+		<property name="plugins">
+			<list>
+				<bean class="com.github.pagehelper.PageInterceptor">
+					<property name="properties">
+						<value>
+							helperDialect=mysql
+							offsetAsPageNum=true
+							rowBoundsWithCount=true
+							pageSizeZero=true
+							reasonable=true
+							supportMethodsArguments=true
+						</value>
+					</property>
+				</bean>
+			</list>
+		</property>
+	</bean>
+	<!-- 自动扫描dao层 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.dp.dao"></property>
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+	</bean>
+	
+	<!-- 其他模块配置文件注入 -->
+	<import resource="spring-shiro.xml"/>
+	<import resource="spring-bean.xml"/>
+</beans>

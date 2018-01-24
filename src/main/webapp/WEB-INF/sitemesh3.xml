@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemesh>
+	<mime-type>text/html</mime-type>
+	
+	<mapping path="/*" decorator="/decorators/main.jsp" />
+	<!-- exclue=true 表示不装饰 -->
+	<mapping path="/static/*" exclue="true" />
+	<mapping path="/login" exclue="true" />
+	<!-- web欢迎页 -->
+	<mapping path="/index.jsp" exclue="true" />
+	<!-- 自定义tag 默认支持title head body  
+	<content-processor>
+		<tag-rule-bundle class="com.sankuai.shangchao.util.HtmlTagRuleBundle" />
+	</content-processor> -->
+</sitemesh>
