@@ -16,7 +16,7 @@
 	href="${ctx}/static/adminlte/bootstrap/css/bootstrap.min.css">
 <!-- Font Awesome -->
 <link rel="stylesheet"
-	href="${ctx}/static/plugins/Font-Awesome-4.5.0/css/font-awesome.min.css">
+	href="${ctx}/static/plugins/font-awesome-4.7.0/css/font-awesome.min.css">
 <!-- Ionicons -->
 <link rel="stylesheet"
 	href="${ctx}/static/plugins/ionicons-2.0.1/css/ionicons.min.css">
